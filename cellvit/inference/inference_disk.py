@@ -386,7 +386,8 @@ class CellViTInference:
             num_workers = 16
         num_workers = int(np.clip(num_workers, 1, 4 * self.batch_size))
         self.num_workers = num_workers
-        self.ray_actors = int(np.clip(1 / 2 * self.batch_size, 4, 8))  # 4-8 actors
+        # The only way I found to make it work is directly setting it to 1
+        self.ray_actors = 1  # int(np.clip(1 / 2 * self.batch_size, 4, 8))  # 4-8 actors
         self.logger.info(f"Using {self.ray_actors} ray-workers")
 
     def process_wsi(
