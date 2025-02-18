@@ -49,6 +49,7 @@ from cellvit.models.cell_segmentation.cellvit_uni import CellViTUNI
 from cellvit.utils.logger import Logger
 from cellvit.utils.tools import unflatten_dict
 from cellvit.models.classifier.linear_classifier import LinearClassifier
+from cellvit.inference.utils import get_slurm_cpus
 
 # get the project root:
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -377,14 +378,15 @@ class CellViTInference:
                 "PYTHONPATH": project_root
             }
         }
-        ray.init(num_cpus=os.cpu_count() - 2, runtime_env=runtime_env)
+        cpus_number = get_slurm_cpus()
+        ray.init(num_cpus=cpus_number - 2, runtime_env=runtime_env)
         # workers for loading data
-        num_workers = int(3 / 4 * os.cpu_count())
+        num_workers = int(3 / 4 * cpus_number)  # 3/4 of the available CPUs (e.g. with 16 CPUs -> 12)
         if num_workers is None:
             num_workers = 16
         num_workers = int(np.clip(num_workers, 1, 4 * self.batch_size))
         self.num_workers = num_workers
-        self.ray_actors = int(np.clip(1 / 2 * self.batch_size, 4, 8))
+        self.ray_actors = int(np.clip(1 / 2 * self.batch_size, 4, 8))  # 4-8 actors
         self.logger.info(f"Using {self.ray_actors} ray-workers")
 
     def process_wsi(
